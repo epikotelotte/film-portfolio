@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LETIAN — Film Director &amp; Photographer</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- 顶部信息区 -->
+  <header class="site-header">
+    <div class="brand">
+      <h1 class="brand-logo" id="brandLogo">LETIAN</h1>
+      <span class="brand-kanji" id="brandKanji">天</span>
+    </div>
+
+    <div class="bio">
+      <p id="bioText"></p>
+      <p class="bio-links">
+        <a href="#" id="showreelLink">Showreel</a>
+        <span class="dash">–</span>
+        <a href="#" id="resumeLink">Resume</a>
+        <span class="dash">–</span>
+        <a href="#" id="emailLink"></a>
+      </p>
+    </div>
+
+    <a class="studio-link" id="studioLink" target="_blank" rel="noopener"></a>
+  </header>
+
+  <!-- 3D 视频轮播舞台 -->
+  <div class="stage" id="stage"></div>
+
+  <!-- 左下角当前项目信息 -->
+  <aside class="project-info">
+    <div class="project-titles">
+      <h2 id="projClient"></h2>
+      <h3 id="projTitle"></h3>
+    </div>
+  </aside>
+
+  <!-- 左下动作条：OPEN + 社交链接 -->
+  <div class="action-bar">
+    <button class="btn" id="openBtn">Open</button>
+    <span id="socialLinks"></span>
+  </div>
+
+  <!-- 底部中央控制 -->
+  <div class="controls">
+    <div class="controls-glow"></div>
+    <button class="btn btn-icon" id="playBtn" aria-label="Pause">
+      <svg id="iconPause" width="12" height="14" viewBox="0 0 12 14" fill="currentColor"><rect x="1" y="1" width="3.4" height="12" rx="1"/><rect x="7.6" y="1" width="3.4" height="12" rx="1"/></svg>
+      <svg id="iconPlay" width="12" height="14" viewBox="0 0 12 14" fill="currentColor" style="display:none"><path d="M1.5 1.2v11.6c0 .9 1 1.5 1.8 1L12 7 3.3.2c-.8-.5-1.8.1-1.8 1z"/></svg>
+    </button>
+  </div>
+
+  <!-- 右下角缩略图胶片条 -->
+  <nav class="filmstrip" id="filmstrip">
+    <div class="filmstrip-track" id="filmstripTrack"></div>
+  </nav>
+
+  <!-- 项目详情浮层 -->
+  <div class="overlay" id="overlay" hidden>
+    <button class="overlay-close" id="overlayClose" aria-label="Close">✕</button>
+    <div class="overlay-inner">
+      <div class="overlay-head">
+        <h2 id="ovClient"></h2>
+        <h3 id="ovTitle"></h3>
+        <span id="ovYear"></span>
+      </div>
+      <div class="overlay-video-wrap">
+        <video id="ovVideo" controls playsinline></video>
+      </div>
+      <dl class="overlay-credits" id="ovCredits"></dl>
+    </div>
+  </div>
+
+  <!-- 简历浮层 -->
+  <div class="overlay resume-overlay" id="resumeOverlay" hidden>
+    <button class="overlay-close" id="resumeClose" aria-label="Close">✕</button>
+    <div class="overlay-inner">
+      <h2 class="resume-title">Resume</h2>
+      <div class="resume-grid" id="resumeGrid"></div>
+      <div class="resume-contact" id="resumeContact"></div>
+    </div>
+  </div>
+
+  <div class="grain" aria-hidden="true"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
