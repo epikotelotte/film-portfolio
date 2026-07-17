@@ -14,7 +14,7 @@ const SITE = {
     { name: "小红书", url: "https://xhslink.com/m/5vmngHdWuDX" },
   ],
   studioName: "Prores_Rua",
-  studioUrl: "https://www.liblib.art/",
+  studioUrl: "https://www.instagram.com/prores_rua?igsh=MXV2d3UxZTYzZTI5OQ%3D%3D&utm_source=qr",
   showreel: {
     title: "Showreel",
     client: "2024 — 2026",

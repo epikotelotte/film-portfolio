@@ -249,14 +249,32 @@ a { color: inherit; }
 .filmstrip {
   position: fixed;
   right: 0;
-  /* 缩略图条垂直中心与暂停键中心（底部 57px）对齐 */
-  bottom: 25px;
+  /* 上下各 11px 齿孔带 + 64px 缩略图；bottom 14 使缩略图中心仍在底部 57px 基准线 */
+  bottom: 14px;
+  padding: 11px 0;
   width: min(42vw, 690px);
   overflow: hidden;
   z-index: 30;
   -webkit-mask-image: linear-gradient(to right, transparent, #000 8%);
   mask-image: linear-gradient(to right, transparent, #000 8%);
 }
+/* 上下胶片齿孔带：暗片基 + 真正打穿的圆角孔洞（透出后面的画面） */
+.filmstrip::before,
+.filmstrip::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 11px;
+  background: #0e0e0e;
+  /* 遮罩：白色区域保留片基，圆角孔洞处透明 = 挖穿 */
+  -webkit-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='11'><path fill='%23fff' fill-rule='evenodd' d='M0 0h16v11H0z M4.5 3h7a1.5 1.5 0 0 1 1.5 1.5v2a1.5 1.5 0 0 1-1.5 1.5h-7a1.5 1.5 0 0 1-1.5-1.5v-2a1.5 1.5 0 0 1 1.5-1.5z'/></svg>") repeat-x left center;
+          mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='11'><path fill='%23fff' fill-rule='evenodd' d='M0 0h16v11H0z M4.5 3h7a1.5 1.5 0 0 1 1.5 1.5v2a1.5 1.5 0 0 1-1.5 1.5h-7a1.5 1.5 0 0 1-1.5-1.5v-2a1.5 1.5 0 0 1 1.5-1.5z'/></svg>") repeat-x left center;
+  z-index: 3;
+  pointer-events: none;
+}
+.filmstrip::before { top: 0; }
+.filmstrip::after { bottom: 0; }
 .filmstrip-track {
   display: flex;
   transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
