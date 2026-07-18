@@ -82,6 +82,11 @@ a { color: inherit; }
 .bio-links a:hover { border-color: #fff; }
 .bio-links .dash { margin: 0 10px; color: var(--fg-dim); }
 
+.studio-block {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+}
 .studio-link {
   font-size: 14px;
   font-weight: 700;
@@ -90,6 +95,14 @@ a { color: inherit; }
   transition: opacity 0.2s;
 }
 .studio-link:hover { opacity: 0.6; }
+.studio-cities {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
 
 /* ---------------- 3D 舞台 ---------------- */
 
@@ -187,10 +200,10 @@ a { color: inherit; }
   line-height: 1.08;
 }
 .project-info h3 {
-  font-size: clamp(22px, 2.9vw, 38px);
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  line-height: 1.12;
+  font-size: clamp(16px, 2vw, 26px);
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  line-height: 1.15;
 }
 
 /* ---------------- 按钮 ---------------- */
@@ -353,7 +366,8 @@ a { color: inherit; }
   pointer-events: none;
 }
 .overlay.open {
-  transform: perspective(1300px) rotateY(0deg) scale(1);
+  /* 翻开后必须归零为 none：带 transform 的祖先会让 fixed 的关闭按钮跟着内容滚走 */
+  transform: none;
   opacity: 1;
   pointer-events: auto;
 }
@@ -370,6 +384,34 @@ a { color: inherit; }
   font-size: 16px;
 }
 .overlay-close:hover { background: var(--btn-bg-hover); }
+/* 作品集 PDF 浮层：PDF.js 逐页懒渲染，滚动浏览 */
+.pdf-status {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.pdf-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 80px 20px 80px;
+}
+.pdf-page {
+  width: min(980px, 94vw);
+  background: #101010;
+  position: relative;
+}
+.pdf-page canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
 .overlay-inner {
   max-width: 1080px;
   margin: 0 auto;

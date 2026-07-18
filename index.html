@@ -22,11 +22,14 @@
         <span class="dash">–</span>
         <a href="#" id="resumeLink">Resume</a>
         <span class="dash">–</span>
-        <a href="#" id="emailLink"></a>
+        <a href="#" id="portfolioLink">Portfolio</a>
       </p>
     </div>
 
-    <a class="studio-link" id="studioLink" target="_blank" rel="noopener"></a>
+    <div class="studio-block">
+      <div class="studio-cities" id="studioCities"></div>
+      <a class="studio-link" id="studioLink" target="_blank" rel="noopener"></a>
+    </div>
   </header>
 
   <!-- 3D 视频轮播舞台 -->
@@ -76,6 +79,13 @@
     </div>
   </div>
 
+  <!-- 作品集 PDF 浮层：PDF.js 逐页懒渲染 -->
+  <div class="overlay portfolio-overlay" id="portfolioOverlay" hidden>
+    <button class="overlay-close" id="portfolioClose" aria-label="Close">✕</button>
+    <div class="pdf-status" id="pdfStatus">Loading portfolio…</div>
+    <div class="pdf-pages" id="pdfPages"></div>
+  </div>
+
   <!-- 简历浮层 -->
   <div class="overlay resume-overlay" id="resumeOverlay" hidden>
     <button class="overlay-close" id="resumeClose" aria-label="Close">✕</button>
@@ -88,7 +98,7 @@
 
   <div class="grain" aria-hidden="true"></div>
 
-  <script src="js/data.js"></script>
-  <script src="js/main.js"></script>
+  <script src="js/data.js?v=7"></script>
+  <script src="js/main.js?v=7"></script>
 </body>
 </html>

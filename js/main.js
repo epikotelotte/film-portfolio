@@ -15,12 +15,12 @@ const N = PROJECTS.length;
 document.getElementById("brandLogo").textContent = SITE.logo;
 document.getElementById("brandKanji").textContent = SITE.logoKanji;
 document.getElementById("bioText").textContent = SITE.bio;
-const emailLink = document.getElementById("emailLink");
-emailLink.textContent = SITE.email;
-emailLink.href = "mailto:" + SITE.email;
 const studioLink = document.getElementById("studioLink");
 studioLink.textContent = SITE.studioName;
 studioLink.href = SITE.studioUrl;
+document.getElementById("studioCities").innerHTML = (SITE.cities || [])
+  .map((c) => `<span>${c}</span>`)
+  .join("");
 // 社交平台图标（单色 SVG，匹配全站黑白风格）
 const SOCIAL_ICONS = {
   Instagram: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.4"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg>`,
@@ -67,7 +67,10 @@ PROJECTS.forEach((p, i) => {
   tv.src = p.video;
   tv.addEventListener("loadedmetadata", () => { tv.currentTime = Math.min(1, tv.duration / 2); });
   thumb.insertBefore(tv, thumb.querySelector(".thumb-label"));
-  thumb.addEventListener("click", () => { state.target = i; state.expanded = false; });
+  thumb.addEventListener("click", () => {
+    state.target += wrapDelta(i - state.target);
+    state.expanded = false;
+  });
   track.appendChild(thumb);
   thumbs.push(thumb);
 });
@@ -88,6 +91,9 @@ const state = {
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+// 首尾相连的最短距离：把差值折到 [-N/2, N/2)
+const wrapDelta = (t) => ((t % N) + N + N / 2) % N - N / 2;
+const wrapIdx = (i) => ((i % N) + N) % N;
 
 let prevPos = 0;
 
@@ -100,7 +106,7 @@ function layout() {
   prevPos = state.pos;
 
   planes.forEach((p, i) => {
-    const t = i - state.pos;
+    const t = wrapDelta(i - state.pos);
     const isNear = Math.abs(t) < 0.5;
     const e = isNear ? state.expand : 0;
     const flip = isNear ? state.flip : 0;
@@ -157,14 +163,13 @@ function setCurrent(idx) {
 function tick(now) {
   // 停止输入 160ms 后吸附到最近的项目
   if (now - state.lastInput > 160) state.target = Math.round(state.target);
-  state.target = clamp(state.target, 0, N - 1);
 
   state.pos = lerp(state.pos, state.target, 0.085);
   state.expand = lerp(state.expand, state.expanded ? 1 : 0, 0.07);
   state.flip = lerp(state.flip, state.flipTarget, 0.09);
 
-  const idx = Math.round(state.pos);
-  setCurrent(clamp(idx, 0, N - 1));
+  const idx = wrapIdx(Math.round(state.pos));
+  setCurrent(idx);
 
   // 当前视频进度条
   const v = planes[state.current].video;
@@ -174,7 +179,7 @@ function tick(now) {
   // 浏览器可能自行挂起视频（切后台/省电策略），发现后自动恢复播放
   if (
     state.playing && !state.flipping && v.paused &&
-    overlay.hidden && resumeOverlay.hidden &&
+    overlay.hidden && resumeOverlay.hidden && portfolioOverlay.hidden &&
     now - (state.lastPlayTry || 0) > 1000
   ) {
     state.lastPlayTry = now;
@@ -187,7 +192,8 @@ function tick(now) {
 
 /* ---------- 输入：滚轮 / 拖拽 / 键盘 ---------- */
 addEventListener("wheel", (e) => {
-  if (!overlay.hidden || !document.getElementById("resumeOverlay").hidden || state.flipping) return;
+  if (!overlay.hidden || !document.getElementById("resumeOverlay").hidden ||
+      !document.getElementById("portfolioOverlay").hidden || state.flipping) return;
   state.expanded = false;
   state.target += (Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX) * 0.0018;
   state.lastInput = performance.now();
@@ -225,6 +231,8 @@ addEventListener("keydown", (e) => {
   if (!overlay.hidden) { if (e.key === "Escape") closeOverlay(); return; }
   const ro = document.getElementById("resumeOverlay");
   if (!ro.hidden) { if (e.key === "Escape") closeResume(); return; }
+  const po = document.getElementById("portfolioOverlay");
+  if (!po.hidden) { if (e.key === "Escape") closePortfolio(); return; }
   if (state.flipping) return;
   if (e.key === "ArrowRight") { state.expanded = false; state.target = Math.round(state.target) + 1; state.lastInput = 0; }
   if (e.key === "ArrowLeft") { state.expanded = false; state.target = Math.round(state.target) - 1; state.lastInput = 0; }
@@ -268,7 +276,8 @@ function openOverlay({ client, title, year, video, credits }) {
     overlay.hidden = false;
     requestAnimationFrame(() => overlay.classList.add("open"));
     planes[state.current].video.pause();
-    ovVideo.play().catch(() => {});
+    ovVideo.muted = true;
+    ovVideo.play().then(() => { ovVideo.muted = false; }).catch(() => {});
     state.flipping = false;
   }, 480);
 }
@@ -352,6 +361,103 @@ document.getElementById("resumeLink").addEventListener("click", (e) => {
 });
 document.getElementById("resumeClose").addEventListener("click", closeResume);
 
+/* ---------- 作品集 PDF 浮层（PDF.js 逐页懒渲染） ---------- */
+const portfolioOverlay = document.getElementById("portfolioOverlay");
+const pdfPages = document.getElementById("pdfPages");
+const pdfStatus = document.getElementById("pdfStatus");
+let pdfLoaded = false;
+
+async function initPdfViewer() {
+  if (pdfLoaded) return;
+  pdfLoaded = true;
+  try {
+    const pdfjsLib = await import("./pdf.min.mjs");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "js/pdf.worker.min.mjs";
+    const doc = await pdfjsLib.getDocument("assets/portfolio.pdf").promise;
+    pdfStatus.style.display = "none";
+
+    // 用第一页的宽高比撑出全部占位，渲染时再校正
+    const first = await doc.getPage(1);
+    const vp0 = first.getViewport({ scale: 1 });
+    const ratio = vp0.height / vp0.width;
+
+    const holders = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const holder = document.createElement("div");
+      holder.className = "pdf-page";
+      holder.dataset.page = i;
+      holder.style.aspectRatio = `${vp0.width} / ${vp0.height}`;
+      pdfPages.appendChild(holder);
+      holders.push(holder);
+    }
+
+    const rendering = new Set();
+    const io = new IntersectionObserver(async (entries) => {
+      for (const entry of entries) {
+        const holder = entry.target;
+        const num = +holder.dataset.page;
+        if (entry.isIntersecting) {
+          if (holder.querySelector("canvas") || rendering.has(num)) continue;
+          rendering.add(num);
+          try {
+            const page = await doc.getPage(num);
+            const width = holder.clientWidth;
+            const dpr = Math.min(devicePixelRatio || 1, 2);
+            const scale = (width / page.getViewport({ scale: 1 }).width) * dpr;
+            const vp = page.getViewport({ scale });
+            const canvas = document.createElement("canvas");
+            canvas.width = vp.width;
+            canvas.height = vp.height;
+            await page.render({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
+            holder.style.aspectRatio = `${vp.width} / ${vp.height}`;
+            if (!holder.querySelector("canvas")) holder.appendChild(canvas);
+          } catch (e) { /* 渲染中断可忽略 */ }
+          rendering.delete(num);
+        } else {
+          // 滚远的页面释放画布，避免几百页占满内存
+          holder.querySelector("canvas")?.remove();
+        }
+      }
+    }, { root: portfolioOverlay, rootMargin: "200% 0px" });
+    holders.forEach((h) => io.observe(h));
+  } catch (e) {
+    pdfStatus.textContent = "Failed to load PDF";
+    pdfLoaded = false;
+  }
+}
+
+function openPortfolio() {
+  if (state.flipping || !overlay.hidden || !resumeOverlay.hidden || !portfolioOverlay.hidden) return;
+  initPdfViewer();
+  state.flipping = true;
+  state.expanded = false;
+  state.flipTarget = 1;
+  setTimeout(() => {
+    portfolioOverlay.hidden = false;
+    requestAnimationFrame(() => portfolioOverlay.classList.add("open"));
+    planes[state.current].video.pause();
+    state.flipping = false;
+  }, 480);
+}
+
+function closePortfolio() {
+  if (state.flipping) return;
+  state.flipping = true;
+  portfolioOverlay.classList.remove("open");
+  setTimeout(() => {
+    portfolioOverlay.hidden = true;
+    state.flipTarget = 0;
+    if (state.playing) planes[state.current].video.play().catch(() => {});
+    setTimeout(() => { state.flipping = false; }, 350);
+  }, 430);
+}
+
+document.getElementById("portfolioLink").addEventListener("click", (e) => {
+  e.preventDefault();
+  openPortfolio();
+});
+document.getElementById("portfolioClose").addEventListener("click", closePortfolio);
+
 /* ---------- 启动 ---------- */
 projClient.textContent = PROJECTS[0].client;
 projTitle.textContent = PROJECTS[0].title;
@@ -365,7 +471,7 @@ addEventListener("resize", layout);
 // 从后台标签切回来时立即恢复播放
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && state.playing &&
-      overlay.hidden && resumeOverlay.hidden) {
+      overlay.hidden && resumeOverlay.hidden && portfolioOverlay.hidden) {
     planes[state.current].video.play().catch(() => {});
   }
 });
