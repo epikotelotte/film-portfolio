@@ -549,7 +549,7 @@ a { color: inherit; }
   .bio-links .dash { margin: 0 6px; }
   /* 城市列表是装饰信息，窄屏隐藏，把空间让给功能链接 */
   .studio-cities { display: none; }
-  .project-info { left: 20px; bottom: 16vh; max-width: 70vw; }
+  .project-info { left: 20px; bottom: 22vh; max-width: 70vw; }
   .action-bar { left: 20px; bottom: 78px; }
   .social-link { width: 40px; height: 40px; }
   .filmstrip { width: 100vw; bottom: 0; }
