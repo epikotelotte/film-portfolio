@@ -97,16 +97,6 @@ const wrapIdx = (i) => ((i % N) + N) % N;
 
 let prevPos = 0;
 
-/* ---------- 鼠标跟随视差（触屏设备自动禁用） ---------- */
-const PARALLAX_ON = matchMedia("(pointer: fine)").matches;
-const pointer = { x: 0, y: 0, sx: 0, sy: 0 }; // 原始值 + 平滑值，范围 -1..1
-if (PARALLAX_ON) {
-  addEventListener("pointermove", (e) => {
-    pointer.x = (e.clientX / innerWidth) * 2 - 1;
-    pointer.y = (e.clientY / innerHeight) * 2 - 1;
-  });
-}
-
 function layout() {
   const vw = innerWidth, vh = innerHeight;
   const cardW = Math.min(vw * 0.54, 900);
@@ -130,21 +120,11 @@ function layout() {
     // 翻转后段淡出，让详情页接管画面
     opacity *= 1 - clamp((flip - 0.55) / 0.45, 0, 1);
 
-    // 视差：朝鼠标方向轻微倾斜 + 平移；全屏时幅度小（呼吸感），卡片态稍大；翻转时归零
-    const par = PARALLAX_ON ? 1 - flip : 0;
-    const rotXPar = -pointer.sy * lerp(3.2, 2.0, e) * par;
-    const rotYPar = pointer.sx * lerp(4.5, 2.4, e) * par;
-    const pxPar = pointer.sx * lerp(6, 14, e) * par;
-    const pyPar = pointer.sy * lerp(4, 10, e) * par;
-    // 全屏时略微放大，避免倾斜后露出画面边缘
-    const scale = 1 + 0.05 * e * (PARALLAX_ON ? 1 : 0);
-
     p.el.style.width = w + "px";
     p.el.style.height = h + "px";
     p.el.style.opacity = opacity;
     p.el.style.transform =
-      `translate(-50%, -50%) translate3d(${x + pxPar}px, ${pyPar}px, ${z}px) ` +
-      `rotateX(${rotXPar}deg) rotateY(${rotY + rotYPar}deg) scale(${scale})`;
+      `translate(-50%, -50%) translate3d(${x}px, 0, ${z}px) rotateY(${rotY}deg)`;
     p.el.style.visibility = Math.abs(t) > 2.6 ? "hidden" : "visible";
     p.el.style.zIndex = isNear ? 5 : 1;
   });
@@ -187,9 +167,6 @@ function tick(now) {
   state.pos = lerp(state.pos, state.target, 0.085);
   state.expand = lerp(state.expand, state.expanded ? 1 : 0, 0.07);
   state.flip = lerp(state.flip, state.flipTarget, 0.09);
-  // 视差平滑：镜头缓缓跟上鼠标，产生手持呼吸感
-  pointer.sx = lerp(pointer.sx, pointer.x, 0.045);
-  pointer.sy = lerp(pointer.sy, pointer.y, 0.045);
 
   const idx = wrapIdx(Math.round(state.pos));
   setCurrent(idx);
