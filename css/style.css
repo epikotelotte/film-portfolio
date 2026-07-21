@@ -537,13 +537,18 @@ a { color: inherit; }
 /* ---------------- 响应式 ---------------- */
 
 @media (max-width: 860px) {
-  .site-header { padding: 20px; }
+  /* 放不下时允许换行：ProRes_Rua 会落到第二行右侧，不再和链接重叠 */
+  .site-header { padding: 20px; flex-wrap: wrap; row-gap: 8px; }
+  .studio-block { margin-left: auto; }
   .brand-logo { font-size: 26px; }
-  /* 窄屏只藏简介正文，保留 SHOWREEL / RESUME / 邮箱链接 */
+  /* 窄屏只藏简介正文，保留 SHOWREEL / RESUME / PORTFOLIO 链接 */
   .bio { width: auto; margin-left: 16px; }
   .bio p:first-child { display: none; }
-  .bio-links { margin-top: 4px; font-size: 11px; }
+  /* 链接强制单行横排，不再竖着堆叠 */
+  .bio-links { margin-top: 4px; font-size: 11px; white-space: nowrap; }
   .bio-links .dash { margin: 0 6px; }
+  /* 城市列表是装饰信息，窄屏隐藏，把空间让给功能链接 */
+  .studio-cities { display: none; }
   .project-info { left: 20px; bottom: 16vh; max-width: 70vw; }
   .action-bar { left: 20px; bottom: 78px; }
   .social-link { width: 40px; height: 40px; }
