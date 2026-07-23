@@ -80,6 +80,25 @@ const RESUME = {
   },
 };
 
+/* ---------------- 技能（SKILLS 浮层） ----------------
+   占位内容：请把每组 items 换成你的真实技能清单 */
+const SKILLS = {
+  sections: [
+    {
+      heading: "创作",
+      items: ["导演 / 编剧", "摄影指导", "剪辑 / 调色", "创意策划 / 美术指导"],
+    },
+    {
+      heading: "工具",
+      items: ["DaVinci Resolve", "Premiere Pro", "Photoshop / Lightroom"],
+    },
+    {
+      heading: "AIGC",
+      items: ["Midjourney", "ComfyUI / Stable Diffusion", "Kling / Runway"],
+    },
+  ],
+};
+
 const PROJECTS = [
   {
     client: "River Believes in River",
@@ -125,14 +144,13 @@ const PROJECTS = [
     ],
   },
   {
-    client: "HANA",
-    title: "‘Bloom’ Live Session",
-    year: "2025",
-    video: "assets/Bunny_Trailer.mp4",
+    client: "Beloved 001",
+    title: "Experimental Film",
+    year: "",
+    video: "assets/beloved.mp4",
     hue: 300,
     credits: [
-      ["Director", "Letian"],
-      ["Live Sound", "R. Mori"],
+      ["DP / Editor / Colorist", "Lotte"],
     ],
   },
   {

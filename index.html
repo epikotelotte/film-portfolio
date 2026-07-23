@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LETIAN — Film Director &amp; Photographer</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css?v=14" />
 </head>
 <body>
 
@@ -23,6 +23,8 @@
         <a href="#" id="resumeLink">Resume</a>
         <span class="dash">–</span>
         <a href="#" id="portfolioLink">Portfolio</a>
+        <span class="dash">–</span>
+        <a href="#" id="skillsLink">Skills</a>
       </p>
     </div>
 
@@ -86,6 +88,15 @@
     <div class="pdf-pages" id="pdfPages"></div>
   </div>
 
+  <!-- 技能浮层 -->
+  <div class="overlay resume-overlay" id="skillsOverlay" hidden>
+    <button class="overlay-close" id="skillsClose" aria-label="Close">✕</button>
+    <div class="overlay-inner">
+      <h2 class="resume-title">Skills</h2>
+      <div class="resume-grid" id="skillsGrid"></div>
+    </div>
+  </div>
+
   <!-- 简历浮层 -->
   <div class="overlay resume-overlay" id="resumeOverlay" hidden>
     <button class="overlay-close" id="resumeClose" aria-label="Close">✕</button>
@@ -97,8 +108,9 @@
   </div>
 
   <div class="grain" aria-hidden="true"></div>
+  <div class="grain-spot" aria-hidden="true"></div>
 
-  <script src="js/data.js?v=7"></script>
-  <script src="js/main.js?v=7"></script>
+  <script src="js/data.js?v=14"></script>
+  <script src="js/main.js?v=14"></script>
 </body>
 </html>

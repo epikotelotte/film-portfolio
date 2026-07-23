@@ -534,6 +534,51 @@ a { color: inherit; }
   100% { transform: translate(2%, 2%); }
 }
 
+/* 鼠标故障色块碎片画布：位于视频舞台之上、按钮/辉光等 UI（z-index 30）之下 */
+.glitch-fx {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+/* 鼠标附近颗粒变活跃（当前未启用，保留备用） */
+.grain-spot {
+  position: fixed;
+  inset: 0;
+  z-index: 41;
+  pointer-events: none;
+  opacity: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grainShift 0.45s steps(3) infinite;
+  transition: opacity 0.5s ease;
+}
+body.spot-on .grain-spot { opacity: 0.22; }
+@keyframes grainShift {
+  0% { background-position: 0 0; }
+  33% { background-position: -74px 42px; }
+  66% { background-position: 51px -63px; }
+  100% { background-position: -28px -47px; }
+}
+
+/* ---------------- 按钮呼吸光（仅悬停时发光） ---------------- */
+
+@keyframes breatheGlow {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 255, 255, 0.10), 0 0 20px rgba(255, 255, 255, 0.05); }
+  50% { box-shadow: 0 0 18px rgba(255, 255, 255, 0.30), 0 0 42px rgba(255, 255, 255, 0.14); }
+}
+.btn:hover, .social-link:hover, .overlay-close:hover, .thumb:hover {
+  animation: breatheGlow 1.8s ease-in-out infinite;
+}
+/* 暂停/播放键的背景光：常驻呼吸 */
+.controls-glow {
+  animation: breatheControls 2.2s ease-in-out infinite;
+}
+@keyframes breatheControls {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.92); filter: blur(6px) brightness(0.8); }
+  50% { transform: translate(-50%, -50%) scale(1.08); filter: blur(8px) brightness(1.25); }
+}
+
 /* ---------------- 响应式 ---------------- */
 
 @media (max-width: 860px) {

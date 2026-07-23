@@ -180,6 +180,7 @@ function tick(now) {
   if (
     state.playing && !state.flipping && v.paused &&
     overlay.hidden && resumeOverlay.hidden && portfolioOverlay.hidden &&
+    skillsOverlay.hidden &&
     now - (state.lastPlayTry || 0) > 1000
   ) {
     state.lastPlayTry = now;
@@ -193,7 +194,8 @@ function tick(now) {
 /* ---------- 输入：滚轮 / 拖拽 / 键盘 ---------- */
 addEventListener("wheel", (e) => {
   if (!overlay.hidden || !document.getElementById("resumeOverlay").hidden ||
-      !document.getElementById("portfolioOverlay").hidden || state.flipping) return;
+      !document.getElementById("portfolioOverlay").hidden ||
+      !document.getElementById("skillsOverlay").hidden || state.flipping) return;
   state.expanded = false;
   state.target += (Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX) * 0.0018;
   state.lastInput = performance.now();
@@ -233,6 +235,8 @@ addEventListener("keydown", (e) => {
   if (!ro.hidden) { if (e.key === "Escape") closeResume(); return; }
   const po = document.getElementById("portfolioOverlay");
   if (!po.hidden) { if (e.key === "Escape") closePortfolio(); return; }
+  const so = document.getElementById("skillsOverlay");
+  if (!so.hidden) { if (e.key === "Escape") closeSkills(); return; }
   if (state.flipping) return;
   if (e.key === "ArrowRight") { state.expanded = false; state.target = Math.round(state.target) + 1; state.lastInput = 0; }
   if (e.key === "ArrowLeft") { state.expanded = false; state.target = Math.round(state.target) - 1; state.lastInput = 0; }
@@ -331,7 +335,8 @@ document.getElementById("resumeContact").innerHTML =
   `<h3>${RESUME.contact.heading}</h3><p>${RESUME.contact.lines.join("<br>")}</p>`;
 
 function openResume() {
-  if (state.flipping || !overlay.hidden || !resumeOverlay.hidden) return;
+  if (state.flipping || !overlay.hidden || !resumeOverlay.hidden ||
+      !skillsOverlay.hidden) return;
   state.flipping = true;
   state.expanded = false;
   state.flipTarget = 1;
@@ -360,6 +365,50 @@ document.getElementById("resumeLink").addEventListener("click", (e) => {
   openResume();
 });
 document.getElementById("resumeClose").addEventListener("click", closeResume);
+
+/* ---------- 技能浮层 ---------- */
+const skillsOverlay = document.getElementById("skillsOverlay");
+
+document.getElementById("skillsGrid").innerHTML = SKILLS.sections
+  .map(
+    (sec) => `<section class="resume-section">
+      <h3>${sec.heading}</h3>
+      <div class="resume-item"><p>${sec.items.join("<br>")}</p></div>
+    </section>`
+  )
+  .join("");
+
+function openSkills() {
+  if (state.flipping || !overlay.hidden || !resumeOverlay.hidden ||
+      !portfolioOverlay.hidden || !skillsOverlay.hidden) return;
+  state.flipping = true;
+  state.expanded = false;
+  state.flipTarget = 1;
+  setTimeout(() => {
+    skillsOverlay.hidden = false;
+    requestAnimationFrame(() => skillsOverlay.classList.add("open"));
+    planes[state.current].video.pause();
+    state.flipping = false;
+  }, 480);
+}
+
+function closeSkills() {
+  if (state.flipping) return;
+  state.flipping = true;
+  skillsOverlay.classList.remove("open");
+  setTimeout(() => {
+    skillsOverlay.hidden = true;
+    state.flipTarget = 0;
+    if (state.playing) planes[state.current].video.play().catch(() => {});
+    setTimeout(() => { state.flipping = false; }, 350);
+  }, 430);
+}
+
+document.getElementById("skillsLink").addEventListener("click", (e) => {
+  e.preventDefault();
+  openSkills();
+});
+document.getElementById("skillsClose").addEventListener("click", closeSkills);
 
 /* ---------- 作品集 PDF 浮层（PDF.js 逐页懒渲染） ---------- */
 const portfolioOverlay = document.getElementById("portfolioOverlay");
@@ -427,7 +476,8 @@ async function initPdfViewer() {
 }
 
 function openPortfolio() {
-  if (state.flipping || !overlay.hidden || !resumeOverlay.hidden || !portfolioOverlay.hidden) return;
+  if (state.flipping || !overlay.hidden || !resumeOverlay.hidden ||
+      !portfolioOverlay.hidden || !skillsOverlay.hidden) return;
   initPdfViewer();
   state.flipping = true;
   state.expanded = false;
@@ -458,6 +508,123 @@ document.getElementById("portfolioLink").addEventListener("click", (e) => {
 });
 document.getElementById("portfolioClose").addEventListener("click", closePortfolio);
 
+/* ---------- 鼠标细碎马赛克 + 马卡龙色块（仅精确指针设备） ----------
+   鼠标滑过时在轨迹附近散落两种迷你方块（对齐像素网格）：
+   ① 视频画面采样的马赛克小格  ② 马卡龙色半透明小色块 */
+if (matchMedia("(pointer: fine)").matches) {
+  const fx = document.createElement("canvas");
+  fx.className = "glitch-fx";
+  document.body.appendChild(fx);
+  const ctx = fx.getContext("2d");
+
+  const PASTELS = ["#ffffff", "#ececec", "#d4d4d4", "#b0b0b0", "#8a8a8a"];
+  const GRID = 6;            // 方块对齐的网格（更细）
+  let cubes = [];
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const snap = (v) => Math.round(v / GRID) * GRID;
+
+  function fitCanvas() {
+    fx.width = innerWidth;
+    fx.height = innerHeight;
+  }
+  fitCanvas();
+  addEventListener("resize", fitCanvas);
+
+  // vx/vy：沿鼠标滑动方向的漂移速度（px/ms），让拖尾像水流
+  function spawn(cx, cy, n, spread, vx, vy) {
+    const now = performance.now();
+    for (let i = 0; i < n; i++) {
+      const pastel = Math.random() < 0.45;   // 45% 灰白色块，其余为画面马赛克
+      cubes.push({
+        x: cx + rand(-spread, spread),
+        y: cy + rand(-spread * 0.8, spread * 0.8),
+        s: GRID * (Math.random() < 0.88 ? 1 : 2),   // 几乎全是 6px 细格
+        vx: vx * rand(0.25, 0.75) + rand(-0.02, 0.02),
+        vy: vy * rand(0.25, 0.75) + rand(-0.02, 0.02),
+        color: pastel ? PASTELS[(Math.random() * PASTELS.length) | 0] : null,
+        a: pastel ? rand(0.25, 0.55) : rand(0.45, 0.8),
+        t: now,
+        life: rand(380, 900),               // 活得更久，尾巴拉长
+      });
+    }
+    if (cubes.length > 90) cubes.splice(0, cubes.length - 90);
+  }
+
+  let lastSpawn = 0;
+  let mouse = null;      // 光标最后位置，null = 已离开窗口
+  let lastEv = null;     // 上一次事件，用于算滑动速度
+  addEventListener("mousemove", (e) => {
+    const now = performance.now();
+    // 滑动速度（px/ms），限幅避免甩动过猛
+    let vx = 0, vy = 0;
+    if (lastEv) {
+      const dt = Math.max(now - lastEv.t, 1);
+      vx = Math.max(-0.5, Math.min(0.5, (e.clientX - lastEv.x) / dt));
+      vy = Math.max(-0.5, Math.min(0.5, (e.clientY - lastEv.y) / dt));
+    }
+    lastEv = { x: e.clientX, y: e.clientY, t: now };
+    mouse = { x: e.clientX, y: e.clientY, vx, vy };
+    if (now - lastSpawn < 40) return;
+    lastSpawn = now;
+    spawn(e.clientX, e.clientY, 2 + (Math.random() * 2) | 0, 34, vx, vy);
+  });
+  // 静止时也持续冒出少量小方块（缓慢向四周游走）
+  setInterval(() => {
+    if (mouse && performance.now() - lastSpawn > 200) {
+      spawn(mouse.x, mouse.y, 1 + (Math.random() * 2) | 0, 26, rand(-0.03, 0.03), rand(-0.03, 0.03));
+    }
+  }, 240);
+  document.documentElement.addEventListener("mouseleave", () => { cubes = []; mouse = null; lastEv = null; });
+
+  let lastTick = performance.now();
+  (function glitchTick() {
+    const now = performance.now();
+    const dt = Math.min(now - lastTick, 50);
+    lastTick = now;
+    ctx.clearRect(0, 0, fx.width, fx.height);
+    cubes = cubes.filter((c) => now - c.t < c.life);
+
+    const plane = planes[state.current];
+    const v = plane.video;
+    const anyOverlayOpen = !overlay.hidden || !resumeOverlay.hidden ||
+      !portfolioOverlay.hidden || !skillsOverlay.hidden;
+
+    if (!anyOverlayOpen && cubes.length) {
+      const hasVideo = !!v.videoWidth;
+      let sc, ox, oy;
+      if (hasVideo) {
+        const rect = plane.el.getBoundingClientRect();
+        sc = Math.max(rect.width / v.videoWidth, rect.height / v.videoHeight);
+        ox = rect.left + (rect.width - v.videoWidth * sc) / 2;
+        oy = rect.top + (rect.height - v.videoHeight * sc) / 2;
+      }
+      for (const c of cubes) {
+        // 顺着滑动方向漂移，带阻尼 → 水流感
+        c.x += c.vx * dt;
+        c.y += c.vy * dt;
+        c.vx *= 0.985;
+        c.vy *= 0.985;
+        const age = (now - c.t) / c.life;
+        // 柔和淡出，仅末段极轻微闪烁
+        if (age > 0.85 && Math.random() < 0.12) continue;
+        ctx.globalAlpha = c.a * Math.pow(1 - age, 1.5);
+        const dx = snap(c.x), dy = snap(c.y);   // 绘制时对齐网格：像素级流动
+        if (c.color) {
+          ctx.fillStyle = c.color;
+          ctx.fillRect(dx, dy, c.s, c.s);
+        } else if (hasVideo) {
+          // 取该处一小点画面放大成整格 → 纯色马赛克
+          try {
+            ctx.drawImage(v, (dx - ox) / sc, (dy - oy) / sc, 3, 3, dx, dy, c.s, c.s);
+          } catch (e) { /* 出界可忽略 */ }
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+    requestAnimationFrame(glitchTick);
+  })();
+}
+
 /* ---------- 启动 ---------- */
 projClient.textContent = PROJECTS[0].client;
 projTitle.textContent = PROJECTS[0].title;
@@ -471,7 +638,8 @@ addEventListener("resize", layout);
 // 从后台标签切回来时立即恢复播放
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && state.playing &&
-      overlay.hidden && resumeOverlay.hidden && portfolioOverlay.hidden) {
+      overlay.hidden && resumeOverlay.hidden && portfolioOverlay.hidden &&
+      skillsOverlay.hidden) {
     planes[state.current].video.play().catch(() => {});
   }
 });
